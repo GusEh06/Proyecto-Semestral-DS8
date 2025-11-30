@@ -1,0 +1,65 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { RestaurantReservationForm } from '../components/react/RestaurantReservationForm';
+---
+
+<Layout title="Reserva tu Mesa - ReservaFácil" description="Disfruta de una experiencia gastronómica inolvidable en el corazón de la ciudad">
+	<main class="min-h-screen relative">
+		<!-- Background Image -->
+		<div
+			class="absolute inset-0 bg-cover bg-center bg-no-repeat"
+			style="background-image: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop'); filter: brightness(0.7);"
+		>
+		</div>
+
+		<!-- Overlay -->
+		<div class="absolute inset-0 bg-black/30"></div>
+
+		<!-- Content -->
+		<div class="relative z-10">
+			<!-- Header Section -->
+			<div class="text-center py-12 px-4">
+				<h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4">
+					Reserva tu Mesa
+				</h1>
+				<p class="text-white text-lg md:text-xl max-w-3xl mx-auto">
+					Disfruta de una experiencia gastronómica inolvidable en el corazón de la ciudad
+				</p>
+			</div>
+
+			<!-- Form Section -->
+			<div class="container mx-auto px-4 pb-16">
+				<RestaurantReservationForm client:load />
+			</div>
+		</div>
+	</main>
+</Layout>
+
+<style>
+	/* Estilos adicionales si son necesarios */
+	:global(.rdp) {
+		--rdp-cell-size: 40px;
+		--rdp-accent-color: #2563eb;
+		--rdp-background-color: #2563eb;
+		font-family: inherit;
+	}
+
+	:global(.rdp-month) {
+		width: 100%;
+	}
+
+	:global(.rdp-table) {
+		max-width: 100%;
+		margin: 0 auto;
+	}
+
+	:global(.rdp-day_selected) {
+		background-color: #2563eb !important;
+		color: white !important;
+	}
+
+	:global(.rdp-day_today) {
+		font-weight: bold;
+		color: #2563eb;
+	}
+</style>

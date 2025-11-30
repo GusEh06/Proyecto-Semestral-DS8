@@ -1,0 +1,53 @@
+---
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="border-t bg-muted/50 mt-auto">
+  <div class="container mx-auto px-4 py-12">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div class="space-y-3">
+        <div class="flex items-center gap-2">
+          <div class="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold">
+            R
+          </div>
+          <span class="font-bold text-lg">ReservaFácil</span>
+        </div>
+        <p class="text-sm text-muted-foreground">
+          Sistema de reservas moderno, rápido y confiable para tu negocio.
+        </p>
+      </div>
+
+      <div>
+        <h3 class="font-semibold mb-3">Navegación</h3>
+        <ul class="space-y-2 text-sm">
+          <li><a href="/" class="text-muted-foreground hover:text-foreground transition-colors">Inicio</a></li>
+          <li><a href="/servicios" class="text-muted-foreground hover:text-foreground transition-colors">Servicios</a></li>
+          <li><a href="/sobre-nosotros" class="text-muted-foreground hover:text-foreground transition-colors">Sobre Nosotros</a></li>
+          <li><a href="/reservar" class="text-muted-foreground hover:text-foreground transition-colors">Reservar</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="font-semibold mb-3">Contacto</h3>
+        <ul class="space-y-2 text-sm text-muted-foreground">
+          <li>Email: info@reservafacil.com</li>
+          <li>Teléfono: +507 6000-0000</li>
+          <li>Horario: Lun-Vie 8:00-18:00</li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="font-semibold mb-3">Legal</h3>
+        <ul class="space-y-2 text-sm">
+          <li><a href="#" class="text-muted-foreground hover:text-foreground transition-colors">Términos de Servicio</a></li>
+          <li><a href="#" class="text-muted-foreground hover:text-foreground transition-colors">Política de Privacidad</a></li>
+          <li><a href="#" class="text-muted-foreground hover:text-foreground transition-colors">Política de Cookies</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
+      <p>&copy; {currentYear} ReservaFácil. Todos los derechos reservados.</p>
+    </div>
+  </div>
+</footer>

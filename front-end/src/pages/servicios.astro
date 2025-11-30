@@ -1,0 +1,262 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navigation from '../components/Navigation.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Servicios - ReservaFácil" description="Descubre todos los servicios que ofrecemos para hacer tus reservas más fáciles">
+	<Navigation />
+
+	<main>
+		<!-- Hero Section -->
+		<section class="border-b bg-muted/30 py-16">
+			<div class="container mx-auto px-4">
+				<div class="max-w-3xl mx-auto text-center space-y-4">
+					<h1 class="text-4xl md:text-5xl font-bold tracking-tight">
+						Nuestros Servicios
+					</h1>
+					<p class="text-xl text-muted-foreground">
+						Soluciones completas de reserva para todo tipo de necesidades
+					</p>
+				</div>
+			</div>
+		</section>
+
+		<!-- Services Section -->
+		<section class="container mx-auto px-4 py-20">
+			<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+				<!-- Service 1 -->
+				<div class="group border rounded-lg p-6 hover:shadow-lg transition-all">
+					<div class="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+							<rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+							<line x1="16" x2="16" y1="2" y2="6"/>
+							<line x1="8" x2="8" y1="2" y2="6"/>
+							<line x1="3" x2="21" y1="10" y2="10"/>
+						</svg>
+					</div>
+					<h3 class="text-xl font-semibold mb-2">Reserva de Citas</h3>
+					<p class="text-muted-foreground mb-4">
+						Agenda citas con profesionales de manera rápida y sencilla. Sistema inteligente de disponibilidad en tiempo real.
+					</p>
+					<ul class="space-y-2 text-sm">
+						<li class="flex items-center gap-2">
+							<svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+							</svg>
+							Confirmación instantánea
+						</li>
+						<li class="flex items-center gap-2">
+							<svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+							</svg>
+							Recordatorios automáticos
+						</li>
+						<li class="flex items-center gap-2">
+							<svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+							</svg>
+							Reprogramación fácil
+						</li>
+					</ul>
+				</div>
+
+				<!-- Service 2 -->
+				<div class="group border rounded-lg p-6 hover:shadow-lg transition-all">
+					<div class="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+							<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+							<polyline points="9 22 9 12 15 12 15 22"/>
+						</svg>
+					</div>
+					<h3 class="text-xl font-semibold mb-2">Reserva de Espacios</h3>
+					<p class="text-muted-foreground mb-4">
+						Gestiona la reserva de salas, oficinas y espacios compartidos con nuestro sistema avanzado.
+					</p>
+					<ul class="space-y-2 text-sm">
+						<li class="flex items-center gap-2">
+							<svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+							</svg>
+							Vista de disponibilidad
+						</li>
+						<li class="flex items-center gap-2">
+							<svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+							</svg>
+							Gestión de recursos
+						</li>
+						<li class="flex items-center gap-2">
+							<svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+							</svg>
+							Capacidad flexible
+						</li>
+					</ul>
+				</div>
+
+				<!-- Service 3 -->
+				<div class="group border rounded-lg p-6 hover:shadow-lg transition-all">
+					<div class="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+							<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+							<circle cx="9" cy="7" r="4"/>
+							<path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+							<path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+						</svg>
+					</div>
+					<h3 class="text-xl font-semibold mb-2">Eventos Grupales</h3>
+					<p class="text-muted-foreground mb-4">
+						Organiza eventos y sesiones grupales con gestión de participantes y capacidad.
+					</p>
+					<ul class="space-y-2 text-sm">
+						<li class="flex items-center gap-2">
+							<svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+							</svg>
+							Control de asistentes
+						</li>
+						<li class="flex items-center gap-2">
+							<svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+							</svg>
+							Listas de espera
+						</li>
+						<li class="flex items-center gap-2">
+							<svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+							</svg>
+							Notificaciones masivas
+						</li>
+					</ul>
+				</div>
+
+				<!-- Service 4 -->
+				<div class="group border rounded-lg p-6 hover:shadow-lg transition-all">
+					<div class="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+							<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+						</svg>
+					</div>
+					<h3 class="text-xl font-semibold mb-2">Servicios Premium</h3>
+					<p class="text-muted-foreground mb-4">
+						Accede a funciones exclusivas con nuestro plan premium diseñado para negocios.
+					</p>
+					<ul class="space-y-2 text-sm">
+						<li class="flex items-center gap-2">
+							<svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+							</svg>
+							Prioridad en reservas
+						</li>
+						<li class="flex items-center gap-2">
+							<svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+							</svg>
+							Soporte 24/7
+						</li>
+						<li class="flex items-center gap-2">
+							<svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+							</svg>
+							Análisis detallados
+						</li>
+					</ul>
+				</div>
+
+				<!-- Service 5 -->
+				<div class="group border rounded-lg p-6 hover:shadow-lg transition-all">
+					<div class="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+							<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+							<polyline points="14 2 14 8 20 8"/>
+							<line x1="16" x2="8" y1="13" y2="13"/>
+							<line x1="16" x2="8" y1="17" y2="17"/>
+							<polyline points="10 9 9 9 8 9"/>
+						</svg>
+					</div>
+					<h3 class="text-xl font-semibold mb-2">Reportes y Análisis</h3>
+					<p class="text-muted-foreground mb-4">
+						Obtén insights valiosos con nuestro sistema de reportes y estadísticas detalladas.
+					</p>
+					<ul class="space-y-2 text-sm">
+						<li class="flex items-center gap-2">
+							<svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+							</svg>
+							Dashboard en tiempo real
+						</li>
+						<li class="flex items-center gap-2">
+							<svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+							</svg>
+							Exportación de datos
+						</li>
+						<li class="flex items-center gap-2">
+							<svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+							</svg>
+							Métricas personalizadas
+						</li>
+					</ul>
+				</div>
+
+				<!-- Service 6 -->
+				<div class="group border rounded-lg p-6 hover:shadow-lg transition-all">
+					<div class="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+							<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+							<path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+						</svg>
+					</div>
+					<h3 class="text-xl font-semibold mb-2">Seguridad y Privacidad</h3>
+					<p class="text-muted-foreground mb-4">
+						Protección completa de datos con encriptación y cumplimiento de normativas.
+					</p>
+					<ul class="space-y-2 text-sm">
+						<li class="flex items-center gap-2">
+							<svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+							</svg>
+							Encriptación SSL/TLS
+						</li>
+						<li class="flex items-center gap-2">
+							<svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+							</svg>
+							Cumplimiento GDPR
+						</li>
+						<li class="flex items-center gap-2">
+							<svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+							</svg>
+							Backups automáticos
+						</li>
+					</ul>
+				</div>
+			</div>
+		</section>
+
+		<!-- CTA Section -->
+		<section class="bg-muted/50 py-20">
+			<div class="container mx-auto px-4">
+				<div class="max-w-3xl mx-auto text-center space-y-6">
+					<h2 class="text-3xl md:text-4xl font-bold">
+						¿Listo para comenzar?
+					</h2>
+					<p class="text-xl text-muted-foreground">
+						Prueba nuestros servicios hoy mismo y descubre cómo podemos ayudarte
+					</p>
+					<a
+						href="/reservar"
+						class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8"
+					>
+						Hacer una Reserva
+					</a>
+				</div>
+			</div>
+		</section>
+	</main>
+
+	<Footer />
+</Layout>
