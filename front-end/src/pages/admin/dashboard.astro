@@ -1,0 +1,8 @@
+---
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import StatsCards from '@/components/react/admin/StatsCards';
+---
+
+<AdminLayout title="Dashboard">
+  <StatsCards client:load />
+</AdminLayout>

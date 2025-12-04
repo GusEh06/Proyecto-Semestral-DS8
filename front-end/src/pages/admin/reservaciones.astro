@@ -1,0 +1,8 @@
+---
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import ReservationsTable from '@/components/react/admin/ReservationsTable';
+---
+
+<AdminLayout title="Gestión de Reservaciones">
+  <ReservationsTable client:load />
+</AdminLayout>

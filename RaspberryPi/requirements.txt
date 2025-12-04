@@ -1,0 +1,16 @@
+# =====================================================
+# DEPENDENCIAS DEL PROYECTO
+# =====================================================
+# Instalar con: pip install -r requirements.txt
+
+# Cliente MQTT
+paho-mqtt==2.1.0
+
+# PostgreSQL adapter para Python
+psycopg2-binary==2.9.9
+
+# Variables de entorno
+python-dotenv==1.0.1
+
+# Utilidades para fechas y tiempos
+python-dateutil==2.8.2

@@ -1,0 +1,66 @@
+---
+import AdminNav from '@/components/react/admin/AdminNav';
+import '@/styles/global.css';
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} - Panel Administrativo</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script is:inline>
+      // Check authentication on page load
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('admin_token');
+        const userData = localStorage.getItem('admin_user');
+
+        if (!token || !userData) {
+          window.location.href = '/admin/login';
+        } else {
+          try {
+            const user = JSON.parse(userData);
+            if (user.exp) {
+              const now = Math.floor(Date.now() / 1000);
+              if (now >= user.exp) {
+                localStorage.removeItem('admin_token');
+                localStorage.removeItem('admin_user');
+                window.location.href = '/admin/login';
+              }
+            }
+          } catch (e) {
+            localStorage.removeItem('admin_token');
+            localStorage.removeItem('admin_user');
+            window.location.href = '/admin/login';
+          }
+        }
+      }
+    </script>
+  </head>
+  <body class="bg-gray-50">
+    <div class="flex h-screen overflow-hidden">
+      <!-- Sidebar Navigation -->
+      <AdminNav client:load />
+
+      <!-- Main Content -->
+      <div class="flex-1 flex flex-col overflow-hidden lg:ml-64">
+        <!-- Page Header -->
+        <header class="bg-white shadow-sm px-6 py-5">
+          <h1 class="text-2xl font-bold text-gray-900">{title}</h1>
+        </header>
+
+        <!-- Page Content -->
+        <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
+          <slot />
+        </main>
+      </div>
+    </div>
+  </body>
+</html>
