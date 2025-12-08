@@ -173,28 +173,31 @@ class SistemaVisionMesas:
     
     def detectar_mesas(self, frame: np.ndarray) -> List[BoundingBox]:
         """
-        Detecta mesas en el frame.
-        
-        Args:
-            frame: Frame de video (numpy array)
-        
-        Returns:
-            Lista de BoundingBox con mesas detectadas
+        Detecta mesas en el frame y las ordena de izquierda a derecha.
         """
-        # Ejecutar modelo YOLO personalizado
         results = self.model_mesas(frame, verbose=False)
         
-        mesas = []
-        for idx, box in enumerate(results[0].boxes):
+        mesas_detectadas = []
+        
+        # 1. Recolectar todas las cajas primero
+        for box in results[0].boxes:
             if float(box.conf[0]) >= CONFIDENCE_THRESHOLD:
                 x1, y1, x2, y2 = map(int, box.xyxy[0])
-                mesas.append(BoundingBox(
+                mesas_detectadas.append(BoundingBox(
                     x1=x1, y1=y1, x2=x2, y2=y2,
                     confidence=float(box.conf[0]),
-                    label=f"Mesa {idx + 1}"
+                    label="Mesa" # Etiqueta temporal
                 ))
         
-        return mesas
+        # 2. ORDENAR POR COORDENADA X (Izquierda -> Derecha)
+        # Esto garantiza que Mesa 1 siempre sea la misma física
+        mesas_detectadas.sort(key=lambda box: box.x1)
+        
+        # 3. Asignar etiquetas finales con el orden correcto
+        for idx, mesa in enumerate(mesas_detectadas):
+            mesa.label = f"Mesa {idx + 1}"
+            
+        return mesas_detectadas
     
     # ==================== CRUCE DE DETECCIONES ====================
     
