@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import Literal
 from app.schemas.tipo_mesa import TipoMesaResponse
 
-
 class MesaBase(BaseModel):
     id_tipo_mesa: int = Field(..., description="ID del tipo de mesa")
     estado: Literal["disponible", "ocupada", "reservada"] = Field(

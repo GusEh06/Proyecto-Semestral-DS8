@@ -1,0 +1,28 @@
+# DEPENDENCIAS PRINCIPALES 
+
+# Computer Vision
+opencv-python==4.9.0.80
+
+# YOLO - Ultralytics
+ultralytics==8.1.20
+
+# Procesamiento de imágenes
+numpy==1.26.4
+pillow==10.2.0
+
+# Requests para API
+requests==2.31.0
+
+# ==================== DEPENDENCIAS OPCIONALES ====================
+
+# Para mejor rendimiento
+torch==2.2.0
+torchvision==0.17.0
+
+# Para visualización
+matplotlib==3.8.3
+
+# Para logging a
+colorlog==6.8.2
+
+# Instalar con: pip install -r requirements.txt --break-system-packages
