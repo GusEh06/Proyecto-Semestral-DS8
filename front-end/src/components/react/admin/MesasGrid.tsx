@@ -21,12 +21,62 @@ export default function MesasGrid() {
   const [selectedMesa, setSelectedMesa] = useState<Mesa | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [isConnected, setIsConnected] = useState(false); // Estado de conexión SSE
 
   useEffect(() => {
+    // Carga inicial de mesas
     loadMesas();
-    // Actualizar cada 10 segundos
-    const interval = setInterval(loadMesas, 10000);
-    return () => clearInterval(interval);
+
+    // 🔴 CONFIGURAR SERVER-SENT EVENTS (SSE) PARA ACTUALIZACIONES EN TIEMPO REAL
+    // ============================================================================
+    // EventSource es la API nativa del navegador para SSE
+    // Mantiene una conexión abierta con el servidor para recibir actualizaciones automáticas
+    const API_BASE = 'http://localhost:8000'; // Debe coincidir con tu backend
+    const eventSource = new EventSource(`${API_BASE}/api/v1/mesas/stream-updates`);
+
+    // Evento: Conexión establecida
+    eventSource.onopen = () => {
+      console.log('[SSE] ✅ Conectado al servidor en tiempo real');
+      setIsConnected(true);
+      setError(null);
+    };
+
+    // Evento: Mensaje recibido del servidor
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        // Manejar diferentes tipos de eventos
+        if (data.type === 'connected') {
+          console.log('[SSE] 📡', data.message);
+        } else if (data.type === 'mesa_update') {
+          // 🎯 ACTUALIZACIÓN DE MESAS EN TIEMPO REAL
+          console.log('[SSE] 🔄 Mesas actualizadas automáticamente', data.data);
+          setMesas(data.data); // Actualizar estado con los nuevos datos
+        }
+      } catch (err) {
+        console.error('[SSE] Error procesando mensaje:', err);
+      }
+    };
+
+    // Evento: Error de conexión
+    eventSource.onerror = (err) => {
+      console.error('[SSE] ❌ Error de conexión:', err);
+      setIsConnected(false);
+
+      // EventSource reintenta automáticamente, pero si falla muchas veces:
+      if (eventSource.readyState === EventSource.CLOSED) {
+        console.log('[SSE] 🔌 Conexión cerrada, intentando reconectar...');
+        setError('Conexión en tiempo real perdida. Reconectando...');
+      }
+    };
+
+    // Cleanup: Cerrar conexión cuando el componente se desmonte
+    return () => {
+      console.log('[SSE] 👋 Cerrando conexión');
+      eventSource.close();
+      setIsConnected(false);
+    };
   }, []);
 
   const loadMesas = async () => {
@@ -123,15 +173,28 @@ export default function MesasGrid() {
     <>
       <div className="space-y-4">
         <div className="flex items-center justify-between bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-          <div className="text-sm font-medium text-gray-700">
-            Total: <span className="font-bold text-gray-900">{mesas.length}</span> mesas
+          <div className="flex items-center gap-4">
+            <div className="text-sm font-medium text-gray-700">
+              Total: <span className="font-bold text-gray-900">{mesas.length}</span> mesas
+            </div>
+
+            {/* 🔴 INDICADOR DE CONEXIÓN EN TIEMPO REAL */}
+            <div className="flex items-center gap-2 text-xs">
+              <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+              <span className={isConnected ? 'text-green-700' : 'text-gray-500'}>
+                {isConnected ? 'Tiempo real activo' : 'Conectando...'}
+              </span>
+            </div>
           </div>
+
+          {/* Botón de actualización manual como fallback */}
           <Button
             variant="outline"
             size="sm"
             onClick={loadMesas}
             disabled={loading}
             className="border-gray-300"
+            title="Actualizar manualmente (útil si la conexión en tiempo real falla)"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Actualizar
@@ -159,7 +222,7 @@ export default function MesasGrid() {
                   </div>
 
                   <h3 className="text-lg font-bold text-gray-900 mb-2">
-                    Mesa #{mesa.numero_mesa || mesa.id_mesa}
+                    Mesa #{mesa.id_mesa}
                   </h3>
 
                   {mesa.tipo_mesa && (
@@ -192,7 +255,7 @@ export default function MesasGrid() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-gray-900">
-              Mesa #{selectedMesa?.numero_mesa || selectedMesa?.id_mesa}
+              Mesa #{selectedMesa?.id_mesa}
             </DialogTitle>
             <DialogDescription className="text-gray-600">
               Cambiar el estado de la mesa manualmente
