@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
+
 from app.config import settings
+from app.database import engine, Base
 from app.routers import (
     auth,
     reservaciones,
@@ -10,12 +13,38 @@ from app.routers import (
     vision
 )
 
+# Importar servicio MQTT
+from app.services.mqtt_service import mqtt_service
+
+# Crear tablas si no existen
+Base.metadata.create_all(bind=engine)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Gestión del ciclo de vida de la aplicación"""
+    # Startup
+    print("\n" + "=" * 60)
+    print("Iniciando aplicacion FastAPI...")
+    print("=" * 60)
+
+    # Iniciar servicio MQTT
+    mqtt_service.start()
+
+    yield
+
+    # Shutdown
+    print("\n" + "=" * 60)
+    print("Cerrando aplicacion...")
+    mqtt_service.stop()
+    print("=" * 60 + "\n")
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="API para sistema de reservaciones de restaurante con visión artificial",
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
 # Configurar CORS
@@ -26,7 +55,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 # Registrar routers
 app.include_router(auth.router, prefix=settings.API_V1_PREFIX)
@@ -43,10 +71,14 @@ def root():
         "message": "API de Sistema de Reservaciones",
         "version": "1.0.0",
         "docs": "/docs",
-        "health": "ok"
+        "health": "ok",
+        "mqtt_connected": mqtt_service.connected
     }
 
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    return {
+        "status": "healthy",
+        "mqtt_status": "connected" if mqtt_service.connected else "disconnected"
+    }

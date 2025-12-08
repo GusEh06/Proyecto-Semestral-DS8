@@ -16,7 +16,11 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Sistema de Reservaciones"
 
     # CORS
+<<<<<<< HEAD
     ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173","http://localhost:4321"]
+=======
+    ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173", "http://localhost:4321"]
+>>>>>>> dc896348bbac8783ca4cada62bc18db695485039
 
     class Config:
         env_file = ".env"

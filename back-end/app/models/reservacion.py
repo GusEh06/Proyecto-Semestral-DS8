@@ -2,6 +2,14 @@ from sqlalchemy import Column, Integer, String, Date, Time, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
+from enum import Enum
+
+
+class EstadoReservacion(str, Enum):
+    PENDIENTE = "pendiente"
+    CONFIRMADA = "confirmada"
+    CANCELADA = "cancelada"
+    COMPLETADA = "completada"
 
 
 class Reservacion(Base):

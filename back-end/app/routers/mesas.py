@@ -1,6 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List
+import asyncio
+import json
+import time
+from datetime import datetime
 from app.database import get_db
 from app.models.mesa import Mesa
 from app.models.usuario_admin import UsuarioAdmin
@@ -8,6 +13,107 @@ from app.schemas.mesa import MesaCreate, MesaUpdate, MesaWithTipoResponse
 from app.utils.dependencies import get_current_user
 
 router = APIRouter(prefix="/mesas", tags=["Gestión de Mesas"])
+
+# ============= SISTEMA DE EVENTOS EN TIEMPO REAL =============
+# Cola global para distribuir eventos a todos los clientes conectados
+# Cada cliente SSE tendrá su propia cola para recibir actualizaciones
+event_queues: List[asyncio.Queue] = []
+
+# Event loop principal (se establece cuando arranca la aplicación)
+main_event_loop: asyncio.AbstractEventLoop | None = None
+
+
+async def event_generator(request: Request):
+    """
+    Generador de eventos SSE (Server-Sent Events).
+
+    ¿Qué hace?
+    - Crea una cola personal para este cliente
+    - Se mantiene conectado enviando eventos cuando hay cambios
+    - Se desconecta automáticamente si el cliente cierra la conexión
+
+    Formato SSE:
+    data: {"type": "mesa_update", "data": {...}}\n\n
+    """
+    # Guardar referencia al event loop principal si aún no lo hemos hecho
+    global main_event_loop
+    if main_event_loop is None:
+        main_event_loop = asyncio.get_event_loop()
+
+    # Crear cola personal para este cliente
+    queue = asyncio.Queue()
+    event_queues.append(queue)
+
+    try:
+        # Enviar evento inicial de conexión
+        yield f"data: {json.dumps({'type': 'connected', 'message': 'Conectado al stream de mesas'})}\n\n"
+
+        # Loop infinito esperando eventos
+        while True:
+            # Verificar si el cliente cerró la conexión
+            if await request.is_disconnected():
+                break
+
+            try:
+                # Esperar evento con timeout de 30 segundos
+                # El timeout evita que la conexión se cierre por inactividad
+                event = await asyncio.wait_for(queue.get(), timeout=30.0)
+
+                # Enviar evento al cliente en formato SSE
+                yield f"data: {json.dumps(event)}\n\n"
+
+            except asyncio.TimeoutError:
+                # Enviar heartbeat cada 30s para mantener conexión viva
+                yield f": heartbeat\n\n"
+
+    except asyncio.CancelledError:
+        # Cliente desconectado
+        pass
+    finally:
+        # Limpiar: remover cola cuando el cliente se desconecta
+        event_queues.remove(queue)
+
+
+def broadcast_mesa_update(mesas_data: List[dict]):
+    """
+    Difunde actualizaciones de mesas a TODOS los clientes conectados.
+
+    Parámetros:
+    - mesas_data: Lista de diccionarios con datos de las mesas actualizadas
+
+    Llamado desde: mqtt_service.py cuando detecta cambios en las mesas
+
+    NOTA: Esta función es llamada desde un thread MQTT (síncrono),
+    por lo que debe ser thread-safe usando call_soon_threadsafe.
+    """
+    global main_event_loop
+
+    if not event_queues:
+        print("   [SSE] No hay clientes conectados")
+        return  # No hay clientes conectados
+
+    if main_event_loop is None:
+        print("   [SSE] Event loop no disponible aún (esperando primera conexión)")
+        return
+
+    # Crear evento
+    event = {
+        "type": "mesa_update",
+        "data": mesas_data,
+        "timestamp": datetime.now().isoformat()
+    }
+
+    # Enviar a todas las colas de forma thread-safe
+    eventos_enviados = 0
+    for queue in event_queues[:]:  # Copiar lista para evitar problemas de concurrencia
+        try:
+            # Usar call_soon_threadsafe para que sea thread-safe desde otro thread
+            main_event_loop.call_soon_threadsafe(queue.put_nowait, event)
+            eventos_enviados += 1
+        except Exception as e:
+            print(f"   [SSE] Error enviando evento a cliente: {e}")
+
+    print(f"   [SSE] ✅ Evento enviado a {eventos_enviados} cliente(s) conectado(s)")
 
 
 @router.get("/", response_model=List[MesaWithTipoResponse])
@@ -29,6 +135,51 @@ def listar_mesas(
 
     mesas = query.all()
     return mesas
+
+
+@router.get("/stream-updates")
+async def stream_mesas(request: Request):
+    """
+    🔴 ENDPOINT DE ACTUALIZACIONES EN TIEMPO REAL (SSE)
+
+    Este endpoint mantiene una conexión abierta con el cliente y envía
+    actualizaciones automáticamente cuando cambia el estado de las mesas.
+
+    Protocolo: Server-Sent Events (SSE)
+    URL: GET /api/v1/mesas/stream
+    Content-Type: text/event-stream
+
+    ¿Cómo funciona?
+    1. El cliente se conecta a este endpoint
+    2. El servidor mantiene la conexión abierta
+    3. Cuando MQTT detecta cambios en las mesas, se envía un evento
+    4. El cliente recibe el evento automáticamente y actualiza la UI
+
+    Eventos emitidos:
+    - connected: Confirmación de conexión exitosa
+    - mesa_update: Actualización de estado de mesas
+    - heartbeat: Señal cada 30s para mantener conexión viva
+
+    Ejemplo de uso en JavaScript:
+    ```javascript
+    const eventSource = new EventSource('http://localhost:8000/api/v1/mesas/stream');
+    eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'mesa_update') {
+            console.log('Mesas actualizadas:', data.data);
+        }
+    };
+    ```
+    """
+    return StreamingResponse(
+        event_generator(request),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"  # Deshabilitar buffering en Nginx
+        }
+    )
 
 
 @router.get("/{mesa_id}", response_model=MesaWithTipoResponse)
