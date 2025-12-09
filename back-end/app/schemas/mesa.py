@@ -9,6 +9,10 @@ class MesaBase(BaseModel):
         default="disponible",
         description="Estado de la mesa"
     )
+    personas_actuales: int = Field(
+        default=0,
+        description="Número de personas actualmente en la mesa (detectadas por visión artificial)"
+    )
 
 
 class MesaCreate(MesaBase):
@@ -18,6 +22,7 @@ class MesaCreate(MesaBase):
 class MesaUpdate(BaseModel):
     id_tipo_mesa: int | None = None
     estado: Literal["disponible", "ocupada", "reservada"] | None = None
+    personas_actuales: int | None = None
 
 
 class MesaResponse(MesaBase):
