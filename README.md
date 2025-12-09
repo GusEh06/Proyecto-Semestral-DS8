@@ -1029,25 +1029,3 @@ Para preguntas o soporte:
 
 **Proyecto desarrollado con ❤️ para Desarrollo de Software VIII**
 
-
-
-<!--  -->
-## LO QUE TENGO QUE HACER
-
-1. EL TRACK
-2. REVISAR LA MESAS Y MOSTRAR ESAS
-3. INTEGRAR LO DE VISION ARTIFICAIAL
-#### hacer que el modelo de visio artificial se conecte al back
-#### para que todo este dinamico
-
-EN BASE A LA PROXIMIDAD DE LAS COSAS
-# el modelo de vision artificial detecta la mesa y la silla ,si la silla esta pegada a la mesa que se vuelva parte de esa mesa y se vuelva dike mesa#1
-# eso lo hace pues detectando la mesa y la silla atraves del modelo de vision artificial
-# entonces eso debe mostrarse en el panel admin
-# tambien si la mesa esta reservada u ocupada 
-# las reservaciones se hacen a traves de la pagina pero el truco es que el modelo cambie las cosas en el dashboard
-# que lo que tenemos que hacer, que el modelo de vision artificial cuando identifique la mesas como anteriormente dije pues en el panel de admin lo que el modelo identifique atraves de la camara sea la mesa con sus sillas y eso lo vuelva una *mesa* como tal (sea mesa#1, mesa#2, etc.) y las personaes en esa mesa, si hay personas sentadas ahi pues que el estado de la mesa ( mesa#1, mesa#2, etc.) cambie a ocupada o disponible porque ya la mesa puede estar reservada claro pero cuando las personas esten sentadas ahi cambiara a ocupada y cuando se vayan a disponible, el estado de reserva no durara mucho porque las personas reservan su mesa y esa mesa estara reservada hashta el dia claro que se hizo la reserva y 15min despues de la hora establicida y ya depue se cambia a disponible.
-
-
-
-# ahora conectar toda esa monda pal front, modificar el back ya quer funciona con info estatica desde la base de datos, ahora 

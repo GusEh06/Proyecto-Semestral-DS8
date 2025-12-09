@@ -4,7 +4,7 @@ from typing import List
 
 class Settings(BaseSettings):
     # Database
-    DATABASE_URL: str = "postgresql://postgres:brunoteamo05@localhost:5432/restaurante_db"
+    DATABASE_URL: str = "postgresql://postgres:shiroapa1805*@localhost:5432/restaurante_db"
 
     # JWT
     SECRET_KEY: str = "y6f9f38c64854372c28a705d8d0535539f4c45b60cef86353010248eee4293386"
