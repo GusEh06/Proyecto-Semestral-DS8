@@ -28,11 +28,20 @@ RUTA_MODELO_MESAS = "Entrenamiendo_mesas/weights/best.pt"
 
 # Parámetros de actualización
 INTERVALO_ACTUALIZACION = 5  # Segundos entre envíos al backend
-CONFIDENCE_THRESHOLD = 0.5   # Umbral de confianza para detecciones
+
+# Parámetros de detección - PERSONAS
+CONFIDENCE_PERSONAS = 0.35     # Umbral más bajo para detectar más personas
+IOU_THRESHOLD_PERSONAS = 0.45  # Threshold de NMS - reduce fusión de personas
+MAX_DETECTIONS = 50            # Máximo de personas a detectar
+
+# Parámetros de detección - MESAS
+CONFIDENCE_MESAS = 0.75        # Umbral MÁS ALTO = menos falsos positivos (paredes, techos, caras)
+MIN_AREA_MESA = 15000          # Área mínima en píxeles (ej: 122x122) - filtra objetos pequeños
+MAX_AREA_MESA = 150000         # Área máxima (ej: 387x387) - rechaza detecciones que cubren >50% imagen
 
 # Configurar logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,  # DEBUG para ver detalles de detección
     format='%(asctime)s - %(levelname)s - %(message)s',
     datefmt='%H:%M:%S'
 )
@@ -136,7 +145,7 @@ class SistemaVisionMesas:
         self.ultimo_envio = 0
         self.mesas_registradas: Dict[int, DeteccionMesa] = {}
         self.contador_frames = 0
-        
+
         # Estadísticas
         self.total_envios = 0
         self.envios_exitosos = 0
@@ -148,55 +157,94 @@ class SistemaVisionMesas:
     
     def detectar_personas(self, frame: np.ndarray) -> List[BoundingBox]:
         """
-        Detecta personas en el frame.
-        
+        Detecta personas en el frame con parámetros optimizados.
+
         Args:
             frame: Frame de video (numpy array)
-        
+
         Returns:
             Lista de BoundingBox con personas detectadas
         """
-        # Ejecutar modelo YOLO - clase 0 es 'person' en COCO
-        results = self.model_personas(frame, classes=[0], verbose=False)
-        
+        # Ejecutar modelo YOLO con parámetros optimizados
+        results = self.model_personas(
+            frame,
+            classes=[0],          # Solo clase 'person' (0 en COCO)
+            conf=CONFIDENCE_PERSONAS,  # Umbral más bajo = detecta más personas
+            iou=IOU_THRESHOLD_PERSONAS,  # NMS menos agresivo = no fusiona personas cercanas
+            max_det=MAX_DETECTIONS,      # Máximo de detecciones por frame
+            verbose=False
+        )
+
         personas = []
         for box in results[0].boxes:
-            if float(box.conf[0]) >= CONFIDENCE_THRESHOLD:
-                x1, y1, x2, y2 = map(int, box.xyxy[0])
-                personas.append(BoundingBox(
-                    x1=x1, y1=y1, x2=x2, y2=y2,
-                    confidence=float(box.conf[0]),
-                    label="Persona"
-                ))
-        
+            x1, y1, x2, y2 = map(int, box.xyxy[0])
+            conf = float(box.conf[0])
+
+            personas.append(BoundingBox(
+                x1=x1, y1=y1, x2=x2, y2=y2,
+                confidence=conf,
+                label="Persona"
+            ))
+
+        # Logging de debug: detectar solapamientos sospechosos
+        if len(personas) > 1:
+            for i, p1 in enumerate(personas):
+                for p2 in personas[i+1:]:
+                    if p1.overlaps_with(p2):
+                        overlap_area = p1.overlap_area(p2)
+                        overlap_pct = (overlap_area / min(p1.area, p2.area)) * 100
+                        if overlap_pct > 30:
+                            logger.debug(f"⚠️  Solapamiento detectado: {overlap_pct:.1f}% "
+                                       f"(conf: {p1.confidence:.2f}, {p2.confidence:.2f})")
+
         return personas
     
     def detectar_mesas(self, frame: np.ndarray) -> List[BoundingBox]:
         """
-        Detecta mesas en el frame y las ordena de izquierda a derecha.
+        Detecta mesas con filtros anti-falsos positivos:
+        - Umbral de confianza alto (0.7)
+        - Filtro por tamaño (área mínima/máxima)
         """
-        results = self.model_mesas(frame, verbose=False)
-        
+        results = self.model_mesas(
+            frame,
+            conf=CONFIDENCE_MESAS,  # Umbral MÁS ALTO = menos falsos positivos
+            verbose=False
+        )
+
         mesas_detectadas = []
-        
-        # 1. Recolectar todas las cajas primero
+
+        # 1. Recolectar detecciones que cumplen los criterios de filtrado
         for box in results[0].boxes:
-            if float(box.conf[0]) >= CONFIDENCE_THRESHOLD:
-                x1, y1, x2, y2 = map(int, box.xyxy[0])
-                mesas_detectadas.append(BoundingBox(
-                    x1=x1, y1=y1, x2=x2, y2=y2,
-                    confidence=float(box.conf[0]),
-                    label="Mesa" # Etiqueta temporal
-                ))
-        
+            x1, y1, x2, y2 = map(int, box.xyxy[0])
+            conf = float(box.conf[0])
+            area = (x2 - x1) * (y2 - y1)
+
+            # FILTRO 1: Área válida (no muy pequeña, no muy grande)
+            if area < MIN_AREA_MESA:
+                logger.debug(f"⛔ Mesa rechazada: área muy pequeña ({area} px²)")
+                continue
+
+            if area > MAX_AREA_MESA:
+                logger.debug(f"⛔ Mesa rechazada: área muy grande ({area} px²)")
+                continue
+
+            # Crear bounding box
+            bbox = BoundingBox(
+                x1=x1, y1=y1, x2=x2, y2=y2,
+                confidence=conf,
+                label="Mesa"
+            )
+
+            mesas_detectadas.append(bbox)
+            logger.debug(f"✅ Mesa detectada (conf: {conf:.2f}, área: {area} px²)")
+
         # 2. ORDENAR POR COORDENADA X (Izquierda -> Derecha)
-        # Esto garantiza que Mesa 1 siempre sea la misma física
         mesas_detectadas.sort(key=lambda box: box.x1)
-        
-        # 3. Asignar etiquetas finales con el orden correcto
+
+        # 3. Asignar IDs finales
         for idx, mesa in enumerate(mesas_detectadas):
             mesa.label = f"Mesa {idx + 1}"
-            
+
         return mesas_detectadas
     
     # ==================== CRUCE DE DETECCIONES ====================
@@ -352,17 +400,28 @@ class SistemaVisionMesas:
             )
             
             if response.status_code == 200:
-                logger.info(f"Actualización enviada exitosamente")
-                self.envios_exitosos += 1
-                
-                # Mostrar respuesta del servidor
                 data = response.json()
-                for resultado in data.get('resultados', []):
-                    if resultado['success']:
-                        logger.info(f"  Mesa {resultado['id_mesa']}: "
+
+                # Verificar que el backend respondió correctamente
+                if not data.get('success'):
+                    logger.error(f"✗ Backend reportó error en respuesta: {data}")
+                    self.envios_fallidos += 1
+                    return False
+
+                logger.info(f"✓ Actualización enviada exitosamente")
+                self.envios_exitosos += 1
+
+                # Mostrar cambios detectados por el backend
+                resultados = data.get('resultados', [])
+                if resultados:
+                    logger.info(f"   Cambios registrados:")
+                    for resultado in resultados:
+                        logger.info(f"     • Mesa {resultado['id_mesa']}: "
                                   f"{resultado['estado_anterior']} → {resultado['estado_nuevo']} "
-                                  f"({resultado['personas_detectadas']} personas)")
-                
+                                  f"({resultado['personas_detectadas']} persona{'s' if resultado['personas_detectadas'] != 1 else ''})")
+                else:
+                    logger.debug("   (Sin cambios de estado)")
+
                 return True
             else:
                 logger.error(f"✗ Error del servidor: {response.status_code}")
