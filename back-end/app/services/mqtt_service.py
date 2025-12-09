@@ -14,7 +14,7 @@ from app.models.reservacion import Reservacion, EstadoReservacion
 
 # ============= CONFIGURACIÓN =============
 # ⚠️ CAMBIAR ESTA IP POR LA DE TU RASPBERRY PI
-BROKER_HOST = "192.168.40.9"  # <-- CAMBIAR AQUÍ
+BROKER_HOST = "100.81.10.77"  # <-- CAMBIAR AQUÍ
 BROKER_PORT = 1883
 TOPIC_OCUPACION = "restaurant/ocupacion"
 TOPIC_DISPOSITIVOS = "restaurant/dispositivos/+/estado"

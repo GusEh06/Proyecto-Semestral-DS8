@@ -10,24 +10,31 @@ Fecha: 2025
 """
 
 import cv2
-import requests
 import time
+import json
 import numpy as np
+import paho.mqtt.client as mqtt
 from ultralytics import YOLO
 from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass
 from datetime import datetime
 import logging
 
-#CONFIGURACIÓN
-
-# URLs y rutas
-IP_WEBCAM = "http://192.168.50.133:8080/video"  # Cambiar según tu IP
-BACKEND_URL = "http://localhost:8000/api/v1/vision/actualizar-estado-mesas"
-RUTA_MODELO_MESAS = "Entrenamiendo_mesas/weights/best.pt"
+# Importar configuración
+from config import (
+    IP_WEBCAM,
+    BROKER_HOST,
+    BROKER_PORT,
+    BROKER_KEEPALIVE,
+    TOPIC_OCUPACION,
+    TOPIC_DISPOSITIVOS,
+    DEVICE_ID,
+    INTERVALO_ACTUALIZACION,
+    RUTA_MODELO_MESAS
+)
 
 # Parámetros de actualización
-INTERVALO_ACTUALIZACION = 5  # Segundos entre envíos al backend
+INTERVALO_ACTUALIZACION = INTERVALO_ACTUALIZACION if 'INTERVALO_ACTUALIZACION' in dir() else 5
 
 # Parámetros de detección - PERSONAS
 CONFIDENCE_PERSONAS = 0.35     # Umbral más bajo para detectar más personas
@@ -114,33 +121,54 @@ class SistemaVisionMesas:
     - Envía actualizaciones al backend automáticamente
     """
     
-    def __init__(self, 
+    def __init__(self,
                  ip_webcam: str = IP_WEBCAM,
-                 backend_url: str = BACKEND_URL,
+                 broker_host: str = BROKER_HOST,
+                 broker_port: int = BROKER_PORT,
                  modelo_mesas_path: str = RUTA_MODELO_MESAS,
                  intervalo_actualizacion: int = INTERVALO_ACTUALIZACION):
         """
         Inicializa el sistema de visión.
-        
+
         Args:
             ip_webcam: URL de la cámara IP o índice de webcam
-            backend_url: URL del endpoint del backend
+            broker_host: IP del broker MQTT
+            broker_port: Puerto del broker MQTT
             modelo_mesas_path: Ruta al modelo YOLO de mesas
-            intervalo_actualizacion: Segundos entre envíos al backend
+            intervalo_actualizacion: Segundos entre envíos al broker
         """
         logger.info("Inicializando Sistema de Visión de Mesas...")
-        
+
         self.ip_webcam = ip_webcam
-        self.backend_url = backend_url
+        self.broker_host = broker_host
+        self.broker_port = broker_port
         self.intervalo_actualizacion = intervalo_actualizacion
-        
+        self.device_id = DEVICE_ID
+
+        # Configurar cliente MQTT
+        logger.info(f"Conectando a broker MQTT en {broker_host}:{broker_port}...")
+        self.mqtt_client = mqtt.Client(
+            mqtt.CallbackAPIVersion.VERSION2,
+            client_id=DEVICE_ID
+        )
+        self.mqtt_client.on_connect = self.on_mqtt_connect
+        self.mqtt_client.on_disconnect = self.on_mqtt_disconnect
+        self.mqtt_connected = False
+
+        try:
+            self.mqtt_client.connect(broker_host, broker_port, BROKER_KEEPALIVE)
+            self.mqtt_client.loop_start()
+        except Exception as e:
+            logger.error(f"Error conectando al broker MQTT: {e}")
+            logger.warning("Continuando sin conexión MQTT...")
+
         # Cargar modelos YOLO
         logger.info("Cargando modelo YOLO para personas...")
-        self.model_personas = YOLO('yolov8n.pt')  # Modelo COCO preentrenado
-        
+        self.model_personas = YOLO('yolov8n.pt')
+
         logger.info("Cargando modelo YOLO para mesas...")
         self.model_mesas = YOLO(modelo_mesas_path)
-        
+
         # Variables de control
         self.ultimo_envio = 0
         self.mesas_registradas: Dict[int, DeteccionMesa] = {}
@@ -150,8 +178,31 @@ class SistemaVisionMesas:
         self.total_envios = 0
         self.envios_exitosos = 0
         self.envios_fallidos = 0
-        
+
         logger.info("✓ Sistema inicializado correctamente")
+
+    def on_mqtt_connect(self, client, userdata, flags, rc, properties=None):
+        """Callback cuando se conecta al broker MQTT"""
+        if rc == 0:
+            self.mqtt_connected = True
+            logger.info("✓ Conectado al broker MQTT")
+
+            # Publicar estado del dispositivo
+            client.publish(
+                f"{TOPIC_DISPOSITIVOS}/{self.device_id}/estado",
+                "online",
+                qos=1,
+                retain=True
+            )
+        else:
+            self.mqtt_connected = False
+            logger.error(f"Error conectando al broker MQTT. Código: {rc}")
+
+    def on_mqtt_disconnect(self, client, userdata, rc, properties=None):
+        """Callback cuando se desconecta del broker MQTT"""
+        self.mqtt_connected = False
+        if rc != 0:
+            logger.warning(f"Desconexión inesperada del broker MQTT (código: {rc})")
     
     # ==================== DETECCIÓN ====================
     
@@ -367,78 +418,58 @@ class SistemaVisionMesas:
         
         return frame_anotado
     
-    # COMUNICACIÓN CON BACKEND 
-    
-    def enviar_actualizacion_backend(self, detecciones: List[DeteccionMesa]) -> bool:
+    # COMUNICACIÓN VÍA MQTT
+
+    def publicar_detecciones_mqtt(self, detecciones: List[DeteccionMesa]) -> bool:
         """
-        Envía las detecciones al backend.
-        
+        Publica las detecciones al broker MQTT.
+
         Args:
             detecciones: Lista de detecciones de mesas
-        
+
         Returns:
-            True si el envío fue exitoso, False en caso contrario
+            True si la publicación fue exitosa, False en caso contrario
         """
+        if not self.mqtt_connected:
+            logger.warning("No conectado al broker MQTT, saltando publicación...")
+            self.envios_fallidos += 1
+            return False
+
         try:
-            # Preparar datos
+            # Preparar payload MQTT
             payload = {
+                "timestamp": datetime.now().isoformat(),
+                "device_id": self.device_id,
                 "detecciones": [
                     {
                         "id_mesa": det.id_mesa,
-                        "personas_detectadas": det.personas_detectadas
+                        "personas_detectadas": det.personas_detectadas,
+                        "confianza": round(det.bbox.confidence, 2)
                     }
                     for det in detecciones
                 ]
             }
-            
-            # Enviar POST al backend
-            logger.info(f"Enviando actualización al backend...")
-            response = requests.post(
-                self.backend_url,
-                json=payload,
-                timeout=5
+
+            # Publicar al topic de ocupación
+            result = self.mqtt_client.publish(
+                TOPIC_OCUPACION,
+                json.dumps(payload),
+                qos=1
             )
-            
-            if response.status_code == 200:
-                data = response.json()
 
-                # Verificar que el backend respondió correctamente
-                if not data.get('success'):
-                    logger.error(f"✗ Backend reportó error en respuesta: {data}")
-                    self.envios_fallidos += 1
-                    return False
-
-                logger.info(f"✓ Actualización enviada exitosamente")
+            if result.rc == mqtt.MQTT_ERR_SUCCESS:
+                logger.info(f"✓ Detecciones publicadas al broker MQTT")
+                logger.info(f"  Topic: {TOPIC_OCUPACION}")
+                logger.info(f"  Mesas: {len(detecciones)}")
                 self.envios_exitosos += 1
-
-                # Mostrar cambios detectados por el backend
-                resultados = data.get('resultados', [])
-                if resultados:
-                    logger.info(f"   Cambios registrados:")
-                    for resultado in resultados:
-                        logger.info(f"     • Mesa {resultado['id_mesa']}: "
-                                  f"{resultado['estado_anterior']} → {resultado['estado_nuevo']} "
-                                  f"({resultado['personas_detectadas']} persona{'s' if resultado['personas_detectadas'] != 1 else ''})")
-                else:
-                    logger.debug("   (Sin cambios de estado)")
-
                 return True
             else:
-                logger.error(f"✗ Error del servidor: {response.status_code}")
-                logger.error(f"  Respuesta: {response.text}")
+                logger.error(f"✗ Error publicando a MQTT (código: {result.rc})")
                 self.envios_fallidos += 1
                 return False
-                
-        except requests.exceptions.Timeout:
-            logger.error("✗ Timeout al conectar con el backend")
-            self.envios_fallidos += 1
-            return False
-        except requests.exceptions.ConnectionError:
-            logger.error("✗ No se pudo conectar con el backend. ¿Está corriendo?")
-            self.envios_fallidos += 1
-            return False
+
         except Exception as e:
-            logger.error(f"✗ Error inesperado: {e}")
+            logger.error(f"✗ Error inesperado publicando a MQTT: {e}")
             self.envios_fallidos += 1
             return False
     
@@ -511,8 +542,9 @@ class SistemaVisionMesas:
             return
         
         logger.info("Conectado a la cámara")
-        logger.info(f"Enviando actualizaciones cada {self.intervalo_actualizacion} segundos")
-        logger.info("Presiona 'q' para salir | 's' para envío manual | 'e' para estadísticas")
+        logger.info(f"Publicando detecciones vía MQTT cada {self.intervalo_actualizacion} segundos")
+        logger.info(f"Broker MQTT: {self.broker_host}:{self.broker_port}")
+        logger.info("Presiona 'q' para salir | 's' para publicación manual | 'e' para estadísticas")
         logger.info("")
         
         try:
@@ -534,10 +566,10 @@ class SistemaVisionMesas:
                 # 3. Dibujar visualización
                 frame_anotado = self.dibujar_detecciones(frame, detecciones)
                 
-                # 4. Actualizar backend automáticamente
+                # 4. Publicar detecciones a MQTT automáticamente
                 if detecciones and self.debe_actualizar_backend():
                     self.total_envios += 1
-                    self.enviar_actualizacion_backend(detecciones)
+                    self.publicar_detecciones_mqtt(detecciones)
                     self.mostrar_estadisticas_consola(detecciones)
                 
                 # 5. Mostrar frame
@@ -549,9 +581,9 @@ class SistemaVisionMesas:
                     logger.info("Saliendo...")
                     break
                 elif key == ord('s') and detecciones:
-                    logger.info("Envío manual solicitado...")
+                    logger.info("Publicación manual solicitada...")
                     self.total_envios += 1
-                    self.enviar_actualizacion_backend(detecciones)
+                    self.publicar_detecciones_mqtt(detecciones)
                     self.mostrar_estadisticas_consola(detecciones)
                 elif key == ord('e'):
                     if detecciones:
@@ -569,7 +601,18 @@ class SistemaVisionMesas:
             # Limpieza
             cap.release()
             cv2.destroyAllWindows()
-            
+
+            # Publicar estado offline
+            if self.mqtt_connected:
+                self.mqtt_client.publish(
+                    f"{TOPIC_DISPOSITIVOS}/{self.device_id}/estado",
+                    "offline",
+                    qos=1,
+                    retain=True
+                )
+                self.mqtt_client.loop_stop()
+                self.mqtt_client.disconnect()
+
             # Estadísticas finales
             logger.info("\n" + "=" * 60)
             logger.info("ESTADÍSTICAS FINALES")
@@ -596,17 +639,18 @@ def main():
           -----------------------------------------------             
     """)
     
-    #  VARIABLES LOCALES (NO TOCAN LAS GLOBALES)
+    # VARIABLES LOCALES
     ip_webcam_local = IP_WEBCAM
-    backend_url_local = BACKEND_URL
+    broker_host_local = BROKER_HOST
+    broker_port_local = BROKER_PORT
     intervalo_local = INTERVALO_ACTUALIZACION
-    
+
     print("\n🔧 CONFIGURACIÓN")
     print("-" * 60)
-    
+
     opcion = input("¿Usar webcam local? (s/n) [n]: ").strip().lower()
     usar_webcam = opcion == 's'
-    
+
     if usar_webcam:
         webcam_index = input("Índice de webcam [0]: ").strip()
         webcam_index = int(webcam_index) if webcam_index else 0
@@ -615,21 +659,22 @@ def main():
         if ip:
             ip_webcam_local = ip
         webcam_index = 0
-    
-    backend = input(f"URL del backend [{BACKEND_URL}]: ").strip()
-    if backend:
-        backend_url_local = backend
-    
+
+    broker = input(f"IP del broker MQTT [{BROKER_HOST}]: ").strip()
+    if broker:
+        broker_host_local = broker
+
     intervalo = input(f"Intervalo de actualización en segundos [{INTERVALO_ACTUALIZACION}]: ").strip()
     if intervalo:
         intervalo_local = int(intervalo)
-    
+
     print("\n✓ Configuración completada\n")
-    
-    #  INICIALIZACIÓN CORRECTA (SIN VARIABLES GLOBALES)
+
+    # INICIALIZACIÓN DEL SISTEMA
     sistema = SistemaVisionMesas(
         ip_webcam=webcam_index if usar_webcam else ip_webcam_local,
-        backend_url=backend_url_local,
+        broker_host=broker_host_local,
+        broker_port=broker_port_local,
         intervalo_actualizacion=intervalo_local
     )
     

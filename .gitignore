@@ -67,3 +67,5 @@ dist/
 
 # Build artifacts
 *.pyc
+
+nul

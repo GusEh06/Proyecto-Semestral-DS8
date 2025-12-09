@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where:*)",
+      "Bash(python apply_migration.py:*)",
+      "Bash(pip install:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

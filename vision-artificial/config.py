@@ -11,13 +11,19 @@ IP_WEBCAM = "http://192.168.1.125:8080/video"  # Cambiar según tu IP
 USAR_WEBCAM_LOCAL = False
 WEBCAM_INDEX = 0  # 0 para cámara predeterminada
 
-#CONFIGURACIÓN DE BACKEND 
+# CONFIGURACIÓN DE MQTT BROKER
 
-# URL del backend FastAPI
-BACKEND_URL = "http://localhost:8000/api/v1/vision/actualizar-estado-mesas"
+# IP del broker MQTT (Raspberry Pi donde corre Mosquitto)
+BROKER_HOST = "100.81.10.77"  # Cambiar por la IP de tu Raspberry Pi
+BROKER_PORT = 1883
+BROKER_KEEPALIVE = 60
 
-# Token de autenticación
-ADMIN_TOKEN = None 
+# Topics MQTT
+TOPIC_OCUPACION = "restaurant/ocupacion"
+TOPIC_DISPOSITIVOS = "restaurant/dispositivos"
+
+# ID único de este dispositivo edge
+DEVICE_ID = "vision_camera_01" 
 
 #  CONFIGURACIÓN DE MODELOS 
 
