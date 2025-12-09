@@ -323,7 +323,7 @@ curl http://localhost:8000/docs
 
 ---
 
-## 📝 COMANDOS RÁPIDOS DE REFERENCIA
+##  COMANDOS RÁPIDOS DE REFERENCIA
 
 ```bash
 # 1. Crear BD

@@ -225,16 +225,18 @@ export default function MesasGrid() {
                     Mesa #{mesa.id_mesa}
                   </h3>
 
-                  {mesa.tipo_mesa && (
-                    <div className="flex items-center text-sm text-gray-600 mb-2">
-                      <Users className="h-4 w-4 mr-1.5" />
-                      <span className="font-medium">{mesa.tipo_mesa.cantidad_sillas} personas</span>
-                    </div>
-                  )}
+                  {/* Mostrar personas REALES detectadas por YOLO */}
+                  <div className="flex items-center text-sm text-gray-600 mb-2">
+                    <Users className="h-4 w-4 mr-1.5" />
+                    <span className="font-medium">
+                      {mesa.personas_actuales} {mesa.personas_actuales === 1 ? 'persona' : 'personas'}
+                    </span>
+                  </div>
 
-                  {mesa.tipo_mesa?.descripcion && (
+                  {/* Mostrar capacidad de la mesa como info secundaria */}
+                  {mesa.tipo_mesa && (
                     <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-100">
-                      {mesa.tipo_mesa.descripcion}
+                      {mesa.tipo_mesa.descripcion} • Capacidad: {mesa.tipo_mesa.cantidad_sillas}
                     </div>
                   )}
                 </CardContent>
@@ -273,16 +275,22 @@ export default function MesasGrid() {
                 </p>
               </div>
 
-              {selectedMesa.tipo_mesa && (
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <p className="text-sm font-semibold text-gray-900">
-                    {selectedMesa.tipo_mesa.descripcion}
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Capacidad: {selectedMesa.tipo_mesa.cantidad_sillas} personas
-                  </p>
-                </div>
-              )}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-2">
+                <p className="text-sm text-gray-900">
+                  <span className="font-semibold">Personas detectadas:</span>{' '}
+                  {selectedMesa.personas_actuales} {selectedMesa.personas_actuales === 1 ? 'persona' : 'personas'}
+                </p>
+                {selectedMesa.tipo_mesa && (
+                  <>
+                    <p className="text-sm text-gray-900">
+                      <span className="font-semibold">Tipo:</span> {selectedMesa.tipo_mesa.descripcion}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      <span className="font-semibold">Capacidad máxima:</span> {selectedMesa.tipo_mesa.cantidad_sillas} personas
+                    </p>
+                  </>
+                )}
+              </div>
 
               <div className="space-y-3 pt-2">
                 <p className="text-sm font-semibold text-gray-700">Cambiar estado a:</p>
