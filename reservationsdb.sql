@@ -1,9 +1,6 @@
 --
 -- PostgreSQL database dump
 --
-
-\restrict H5isupFJpsG7C6udcsUGqPdlMtLTlpcHmdRGQb6srKbbD9Ac75igTwKKTS5IFuU
-
 -- Dumped from database version 18.0
 -- Dumped by pg_dump version 18.0
 
@@ -25,20 +22,6 @@ SET row_security = off;
 -- TOC entry 4 (class 2615 OID 2200)
 -- Name: public; Type: SCHEMA; Schema: -; Owner: pg_database_owner
 --
-
-CREATE SCHEMA public;
-
-
-ALTER SCHEMA public OWNER TO pg_database_owner;
-
---
--- TOC entry 5060 (class 0 OID 0)
--- Dependencies: 4
--- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: pg_database_owner
---
-
-COMMENT ON SCHEMA public IS 'standard public schema';
-
 
 SET default_tablespace = '';
 
@@ -376,6 +359,4 @@ ALTER TABLE ONLY public.reservaciones
 --
 -- PostgreSQL database dump complete
 --
-
-\unrestrict H5isupFJpsG7C6udcsUGqPdlMtLTlpcHmdRGQb6srKbbD9Ac75igTwKKTS5IFuU
 
