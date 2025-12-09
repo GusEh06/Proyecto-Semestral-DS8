@@ -146,6 +146,7 @@ def listar_mesas(
             "id_mesa": mesa.id_mesa,
             "id_tipo_mesa": mesa.id_tipo_mesa,
             "estado": mesa.estado,
+            "personas_actuales": mesa.personas_actuales,
             "updated_at": mesa.updated_at,
             "tipo_mesa": mesa.tipo_mesa,
             "reservacion_activa": None
