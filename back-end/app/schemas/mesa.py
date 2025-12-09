@@ -3,12 +3,15 @@ from datetime import datetime, date, time
 from typing import Literal, Optional
 from app.schemas.tipo_mesa import TipoMesaResponse
 
-
 class MesaBase(BaseModel):
     id_tipo_mesa: int = Field(..., description="ID del tipo de mesa")
     estado: Literal["disponible", "ocupada", "reservada"] = Field(
         default="disponible",
         description="Estado de la mesa"
+    )
+    personas_actuales: int = Field(
+        default=0,
+        description="Número de personas actualmente en la mesa (detectadas por visión artificial)"
     )
 
 
@@ -19,6 +22,7 @@ class MesaCreate(MesaBase):
 class MesaUpdate(BaseModel):
     id_tipo_mesa: int | None = None
     estado: Literal["disponible", "ocupada", "reservada"] | None = None
+    personas_actuales: int | None = None
 
 
 class MesaResponse(MesaBase):

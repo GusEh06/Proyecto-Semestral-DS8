@@ -10,6 +10,7 @@ class Mesa(Base):
     id_mesa = Column(Integer, primary_key=True, index=True)
     id_tipo_mesa = Column(Integer, ForeignKey("tipo_mesa.id_tipo_mesa", ondelete="RESTRICT"), nullable=False)
     estado = Column(String(20), nullable=False, default="disponible")
+    personas_actuales = Column(Integer, nullable=False, default=0)
     updated_at = Column(DateTime(timezone=False), default=func.now(), onupdate=func.now())
 
     tipo_mesa = relationship("TipoMesa", backref="mesas")
