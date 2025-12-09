@@ -284,6 +284,47 @@ export default function MesasGrid() {
                 </div>
               )}
 
+              {/* Mostrar información de reservación si la mesa está reservada */}
+              {selectedMesa.estado === 'reservada' && selectedMesa.reservacion_activa && (
+                <div className="bg-blue-50 border border-blue-300 rounded-lg p-4">
+                  <h3 className="text-sm font-bold text-blue-900 mb-3">Información de la Reservación</h3>
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-xs text-blue-700 font-medium">Cliente:</p>
+                      <p className="text-sm text-gray-900 font-semibold">
+                        {selectedMesa.reservacion_activa.nombre} {selectedMesa.reservacion_activa.apellido}
+                      </p>
+                    </div>
+                    {selectedMesa.reservacion_activa.telefono && (
+                      <div>
+                        <p className="text-xs text-blue-700 font-medium">Teléfono:</p>
+                        <p className="text-sm text-gray-900">
+                          {selectedMesa.reservacion_activa.telefono}
+                        </p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-xs text-blue-700 font-medium">Correo:</p>
+                      <p className="text-sm text-gray-900">
+                        {selectedMesa.reservacion_activa.correo}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-blue-700 font-medium">Personas:</p>
+                      <p className="text-sm text-gray-900">
+                        {selectedMesa.reservacion_activa.cantidad_personas}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-blue-700 font-medium">Hora:</p>
+                      <p className="text-sm text-gray-900">
+                        {selectedMesa.reservacion_activa.hora}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-3 pt-2">
                 <p className="text-sm font-semibold text-gray-700">Cambiar estado a:</p>
                 <div className="grid grid-cols-3 gap-3">

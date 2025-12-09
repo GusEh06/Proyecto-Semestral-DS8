@@ -123,9 +123,12 @@ def listar_mesas(
     db: Session = Depends(get_db)
 ):
     """
-    Lista todas las mesas con sus tipos.
+    Lista todas las mesas con sus tipos y reservaciones activas.
     Endpoint público para consulta.
     """
+    from app.models.reservacion import Reservacion
+    from datetime import date
+
     query = db.query(Mesa)
 
     if estado:
@@ -134,7 +137,44 @@ def listar_mesas(
         query = query.filter(Mesa.id_tipo_mesa == id_tipo_mesa)
 
     mesas = query.all()
-    return mesas
+
+    # Enriquecer con información de reservaciones activas
+    hoy = date.today()
+    mesas_con_info = []
+    for mesa in mesas:
+        mesa_dict = {
+            "id_mesa": mesa.id_mesa,
+            "id_tipo_mesa": mesa.id_tipo_mesa,
+            "estado": mesa.estado,
+            "updated_at": mesa.updated_at,
+            "tipo_mesa": mesa.tipo_mesa,
+            "reservacion_activa": None
+        }
+
+        # Si la mesa está reservada, buscar la reservación activa
+        if mesa.estado == "reservada":
+            reservacion = db.query(Reservacion).filter(
+                Reservacion.id_mesa == mesa.id_mesa,
+                Reservacion.fecha == hoy,
+                Reservacion.estado.in_(["pendiente", "confirmada"])
+            ).first()
+
+            if reservacion:
+                mesa_dict["reservacion_activa"] = {
+                    "id_reserva": reservacion.id_reserva,
+                    "nombre": reservacion.nombre,
+                    "apellido": reservacion.apellido,
+                    "telefono": reservacion.telefono,
+                    "correo": reservacion.correo,
+                    "cantidad_personas": reservacion.cantidad_personas,
+                    "fecha": reservacion.fecha,
+                    "hora": reservacion.hora,
+                    "estado": reservacion.estado
+                }
+
+        mesas_con_info.append(mesa_dict)
+
+    return mesas_con_info
 
 
 @router.get("/stream-updates")

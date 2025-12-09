@@ -9,6 +9,7 @@ from datetime import datetime, date
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.models.mesa import Mesa
+from app.models.tipo_mesa import TipoMesa
 from app.models.reservacion import Reservacion, EstadoReservacion
 
 # ============= CONFIGURACIÓN =============
@@ -102,45 +103,65 @@ class MQTTService:
         try:
             mesas_actualizadas = 0
             cambios = []
-            mesas_ignoradas = []  # Mesas con reserva que fueron ignoradas
+
+            # Obtener o crear tipo de mesa predeterminado
+            tipo_predeterminado = db.query(TipoMesa).first()
+            if not tipo_predeterminado:
+                # Crear tipo de mesa genérico si no existe
+                tipo_predeterminado = TipoMesa(
+                    descripcion="Mesa estándar",
+                    cantidad_sillas=4
+                )
+                db.add(tipo_predeterminado)
+                db.commit()
+                db.refresh(tipo_predeterminado)
+                print(f"   [INFO] Tipo de mesa predeterminado creado")
 
             for det in detecciones:
                 id_mesa = det.get("id_mesa")
                 personas = det.get("personas_detectadas", 0)
                 confianza = det.get("confianza", 0)
 
-                # Obtener mesa de la BD
+                # Obtener o crear mesa en la BD
                 mesa = db.query(Mesa).filter(Mesa.id_mesa == id_mesa).first()
                 if not mesa:
-                    continue
-
-                # 🔒 PROTECCIÓN: Verificar si la mesa tiene una reserva activa
-                # Si tiene reserva, NO permitir que el edge device modifique su estado
-                tiene_reservacion_activa = db.query(Reservacion).filter(
-                    Reservacion.id_mesa == id_mesa,
-                    Reservacion.fecha == date.today(),
-                    Reservacion.estado.in_([
-                        EstadoReservacion.PENDIENTE,
-                        EstadoReservacion.CONFIRMADA
-                    ])
-                ).first() is not None
-
-                if tiene_reservacion_activa:
-                    # Mesa reservada - ignorar detección del edge device
-                    mesas_ignoradas.append(id_mesa)
-                    continue  # Saltar al siguiente
+                    # Crear mesa automáticamente
+                    estado_inicial = "ocupada" if personas > 0 else "disponible"
+                    mesa = Mesa(
+                        id_mesa=id_mesa,
+                        id_tipo_mesa=tipo_predeterminado.id_tipo_mesa,
+                        estado=estado_inicial
+                    )
+                    db.add(mesa)
+                    db.commit()
+                    db.refresh(mesa)
+                    print(f"   [NUEVA] Mesa {id_mesa} creada automáticamente (estado: {estado_inicial})")
 
                 estado_anterior = mesa.estado
 
-                # Lógica de actualización de estado (solo para mesas SIN reserva)
+                # Verificar si hay una reservación activa para hoy
+                hoy = date.today()
+                reservacion_activa = db.query(Reservacion).filter(
+                    Reservacion.id_mesa == id_mesa,
+                    Reservacion.fecha == hoy,
+                    Reservacion.estado.in_(["pendiente", "confirmada"])
+                ).first()
+
+                # Lógica de actualización de estado basada en detecciones
                 if personas > 0:
                     # Hay personas detectadas → mesa ocupada
                     nuevo_estado = "ocupada"
                     razon = f"{personas} persona(s) detectada(s)"
                 else:
-                    # No hay personas ni reserva → mesa disponible
-                    nuevo_estado = "disponible"
-                    razon = "Sin personas"
+                    # No hay personas detectadas
+                    if reservacion_activa:
+                        # Hay una reservación activa → mantener como reservada
+                        nuevo_estado = "reservada"
+                        razon = f"Reservada (ID: {reservacion_activa.id_reserva})"
+                    else:
+                        # No hay reservación → disponible
+                        nuevo_estado = "disponible"
+                        razon = "Sin personas"
 
                 # Actualizar solo si cambió el estado
                 if estado_anterior != nuevo_estado:
@@ -155,11 +176,6 @@ class MQTTService:
                     })
 
                     mesas_actualizadas += 1
-
-            # Mostrar mesas ignoradas por tener reserva
-            if mesas_ignoradas:
-                print(f"   [PROTECCION] {len(mesas_ignoradas)} mesa(s) ignorada(s) por tener reserva activa:")
-                print(f"      Mesas: {', '.join(map(str, mesas_ignoradas))}")
 
             # Guardar cambios en la BD
             if mesas_actualizadas > 0:
@@ -197,6 +213,7 @@ class MQTTService:
 
             # Obtener todas las mesas con sus relaciones
             mesas = db.query(Mesa).all()
+            hoy = date.today()
 
             # Convertir a formato JSON serializable
             mesas_data = []
@@ -205,7 +222,8 @@ class MQTTService:
                     "id_mesa": mesa.id_mesa,
                     "estado": mesa.estado,
                     "id_tipo_mesa": mesa.id_tipo_mesa,
-                    "updated_at": mesa.updated_at.isoformat() if mesa.updated_at else None
+                    "updated_at": mesa.updated_at.isoformat() if mesa.updated_at else None,
+                    "reservacion_activa": None
                 }
 
                 # Incluir datos del tipo de mesa si existe
@@ -215,6 +233,27 @@ class MQTTService:
                         "descripcion": mesa.tipo_mesa.descripcion,
                         "cantidad_sillas": mesa.tipo_mesa.cantidad_sillas
                     }
+
+                # Si la mesa está reservada, incluir información de la reservación activa
+                if mesa.estado == "reservada":
+                    reservacion = db.query(Reservacion).filter(
+                        Reservacion.id_mesa == mesa.id_mesa,
+                        Reservacion.fecha == hoy,
+                        Reservacion.estado.in_(["pendiente", "confirmada"])
+                    ).first()
+
+                    if reservacion:
+                        mesa_dict["reservacion_activa"] = {
+                            "id_reserva": reservacion.id_reserva,
+                            "nombre": reservacion.nombre,
+                            "apellido": reservacion.apellido,
+                            "telefono": reservacion.telefono,
+                            "correo": reservacion.correo,
+                            "cantidad_personas": reservacion.cantidad_personas,
+                            "fecha": reservacion.fecha.isoformat(),
+                            "hora": reservacion.hora.isoformat(),
+                            "estado": reservacion.estado
+                        }
 
                 mesas_data.append(mesa_dict)
 

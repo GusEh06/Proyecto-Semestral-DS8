@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
-from datetime import datetime
-from typing import Literal
+from datetime import datetime, date, time
+from typing import Literal, Optional
 from app.schemas.tipo_mesa import TipoMesaResponse
 
 
@@ -29,8 +29,25 @@ class MesaResponse(MesaBase):
         from_attributes = True
 
 
+class ReservacionActiva(BaseModel):
+    """Información resumida de la reservación activa para una mesa"""
+    id_reserva: int
+    nombre: str
+    apellido: str
+    telefono: Optional[str] = None
+    correo: str
+    cantidad_personas: int
+    fecha: date
+    hora: time
+    estado: str
+
+    class Config:
+        from_attributes = True
+
+
 class MesaWithTipoResponse(MesaResponse):
     tipo_mesa: TipoMesaResponse
+    reservacion_activa: Optional[ReservacionActiva] = None
 
     class Config:
         from_attributes = True
