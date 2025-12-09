@@ -3,7 +3,13 @@
     "allow": [
       "Bash(where:*)",
       "Bash(python apply_migration.py:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(python -c:*)",
+      "Bash(timeout 10 python:*)",
+      "Bash(curl:*)",
+      "Bash(python -m json.tool:*)",
+      "Bash(taskkill:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

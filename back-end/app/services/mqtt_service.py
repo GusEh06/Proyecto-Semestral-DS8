@@ -50,7 +50,7 @@ class MQTTService:
             print(f"[ERROR] Error de conexión MQTT. Código: {rc}")
             print(f"   Verifica que Mosquitto esté corriendo en {BROKER_HOST}")
     
-    def on_disconnect(self, client, userdata, rc, properties=None):
+    def on_disconnect(self, client, userdata, disconnect_flags, rc, properties=None):
         """Callback cuando se desconecta"""
         self.connected = False
         if rc != 0:
