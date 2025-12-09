@@ -111,6 +111,18 @@ export interface EstadisticasDashboard {
   };
 }
 
+export interface ReservacionActiva {
+  id_reserva: number;
+  nombre: string;
+  apellido: string;
+  telefono?: string;
+  correo: string;
+  cantidad_personas: number;
+  fecha: string;
+  hora: string;
+  estado: string;
+}
+
 export interface Mesa {
   id_mesa: number;
   numero_mesa?: number;
@@ -121,6 +133,7 @@ export interface Mesa {
     descripcion: string;
     cantidad_sillas: number;
   };
+  reservacion_activa?: ReservacionActiva | null;
 }
 
 export interface ReservacionAdmin extends ReservacionResponse {

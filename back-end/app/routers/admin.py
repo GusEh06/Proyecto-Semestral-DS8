@@ -276,17 +276,13 @@ def obtener_estadisticas(
     ).group_by(Reservacion.estado).all()
 
     return {
-        "reservaciones": {
-            "total": total_reservaciones,
-            "hoy": reservaciones_hoy,
-            "pendientes": reservaciones_pendientes,
-            "confirmadas_hoy": reservaciones_confirmadas_hoy,
-            "por_estado": {estado: count for estado, count in reservaciones_por_estado}
-        },
-        "mesas": {
-            "total": total_mesas,
-            "disponibles": mesas_disponibles,
-            "ocupadas": mesas_ocupadas,
-            "reservadas": mesas_reservadas
-        }
+        "total_reservaciones": total_reservaciones,
+        "reservaciones_hoy": reservaciones_hoy,
+        "reservaciones_pendientes": reservaciones_pendientes,
+        "reservaciones_confirmadas_hoy": reservaciones_confirmadas_hoy,
+        "reservaciones_por_estado": {estado: count for estado, count in reservaciones_por_estado},
+        "total_mesas": total_mesas,
+        "mesas_disponibles": mesas_disponibles,
+        "mesas_ocupadas": mesas_ocupadas,
+        "mesas_reservadas": mesas_reservadas
     }

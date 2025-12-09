@@ -178,7 +178,7 @@ export default function StatsCards() {
         </CardHeader>
         <CardContent className="pt-6">
           <div className="space-y-4">
-            {Object.entries(stats.reservaciones_por_estado).map(([estado, count]) => {
+            {Object.entries(stats.reservaciones_por_estado || {}).map(([estado, count]) => {
               const colors = {
                 pendiente: { bg: 'bg-yellow-100', bar: 'bg-yellow-500', text: 'text-yellow-700' },
                 confirmada: { bg: 'bg-green-100', bar: 'bg-green-500', text: 'text-green-700' },

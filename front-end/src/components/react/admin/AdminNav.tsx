@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { logout, getUser } from '@/lib/auth';
 import {
@@ -25,8 +25,14 @@ const navigation: NavItem[] = [
 
 export default function AdminNav() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const user = getUser();
-  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  const [currentPath, setCurrentPath] = useState('');
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    // Solo ejecutar en el cliente
+    setCurrentPath(window.location.pathname);
+    setUser(getUser());
+  }, []);
 
   const handleLogout = () => {
     logout();
