@@ -128,6 +128,7 @@ export interface Mesa {
   numero_mesa?: number;
   id_tipo_mesa: number;
   estado: 'disponible' | 'ocupada' | 'reservada';
+  personas_actuales: number;
   updated_at: string;
   tipo_mesa?: {
     descripcion: string;
